@@ -1,0 +1,7 @@
+{
+  :paths ["src"]
+  :deps {}
+
+  :aliases
+  {:run {:main-opts ["-m" "aoc.core"]}}
+}
