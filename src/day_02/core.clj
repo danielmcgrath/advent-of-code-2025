@@ -16,22 +16,34 @@
       (let [[first second] (bisect s)]
         (not= first second)))))
 
-(defn parse-range [s]
-  (->> (str/split s #"-")
-       (map #(bigint %))))
+(defn is-all-repeating? [s]
+  (let [n (count s)]
+    (loop [len 1]
+      (if (> len (/ n 2))
+        false
+        (let [sub (subs s 0 len)]
+          (if (and (zero? (mod n len))
+                   (= s (apply str (repeat (/ n len) sub))))
+            true
+            (recur (inc len))))))))
 
-(defn check-range [acc, v]
+(defn parse-range [s]
+  (map bigint (str/split s #"-")))
+
+(defn check-range [acc v]
   (if (is-valid? v) acc (+ acc v)))
 
-(defn tot [acc, item]
+(defn check-range-2 [acc v]
+  (if (is-all-repeating? (str v)) (+ acc v) acc))
+
+(defn sum-range [rf acc item]
   (let [[start end] (parse-range item)]
-    (reduce check-range acc (range start (+ end 1)))))
+    (reduce rf acc (range start (inc end)))))
 
 (defn v1 [input]
   (->> (parse input)
-       (reduce tot 0)))
+       (reduce (partial sum-range check-range) 0)))
 
 (defn v2 [input]
-  (let [nums (parse input)]
-    (apply max nums)))
-
+  (->> (parse input)
+       (reduce (partial sum-range check-range-2) 0)))
