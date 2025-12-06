@@ -33,11 +33,17 @@
   (let [[ranges ids] (split-input (str/split-lines input))]
     [(collapse-ranges ranges) (map parse-long ids)]))
 
+(defn range-size [[lo hi]]
+  (inc (- hi lo)))
+
+(defn count-valid-ids [ranges]
+  (reduce + (map range-size ranges)))
+
 (defn v1 [input]
   (let [[ranges ids] (parse input)]
     (check-ids ranges ids)))
 
 (defn v2 [input]
-  (let [nums (parse input)]
-    (apply max nums)))
+  (let [[ranges _] (parse input)]
+    (count-valid-ids ranges)))
 
