@@ -26,9 +26,37 @@
    [bits splits]
    row))
 
+(defn handle-row-v2 [counts row]
+  (let [n (count counts)]
+    (reduce-kv
+     (fn [next idx ch]
+       (let [ways (counts idx)]
+         (cond
+           (zero? ways)
+           next
+
+           (= ch \^)
+           (-> next
+               (cond-> (> idx 0)
+                 (update (dec idx) + ways))
+               (cond-> (< (inc idx) n)
+                 (update (inc idx) + ways)))
+           :else
+           (update next idx + ways))))
+     (vec (repeat n 0))
+     row)))
+
 (defn v1 [input]
   (let [grid      (parse-grid input)
         first-row (first grid)
         start-idx (find-char first-row \S)
         bits      (assoc (vec (repeat (count first-row) 0)) start-idx 1)]
     (reduce handle-row [bits 0] grid)))
+
+(defn v2 [input]
+  (let [grid      (parse-grid input)
+        first-row (first grid)
+        start-idx (find-char first-row \S)
+        base      (vec (repeat (count first-row) 0))
+        counts    (assoc base start-idx 1)]
+    (reduce + (reduce handle-row-v2 counts (rest grid)))))
