@@ -41,8 +41,7 @@
   (reduce
    (fn [acc edge]
      (let [{:keys [i j]} edge
-           parent (:parent acc)
-           size (:size acc)
+           {:keys [parent size]} acc
            ri (find-root parent i)
            rj (find-root parent j)]
        (if (= ri rj)
@@ -50,7 +49,6 @@
          (let [[small large] (if (<= (size ri) (size rj))
                                [ri rj]
                                [rj ri])]
-
            {:parent (assoc parent small large)
             :size   (assoc size large (+ (size large) (size small)))}))))
    (initial-circuits junctions)
@@ -71,7 +69,6 @@
 (defn v2 [input]
   (let [junctions (parse input)
         edges     (compute-distances junctions)
-        n         (count junctions)
         {:keys [last-edge]}
         (reduce
          (fn [{:keys [parent size components] :as acc} edge]
@@ -94,7 +91,7 @@
                    acc')))))
          (initial-circuits junctions)
          edges)
-              ;; take just the x coordinates
+        ;; take just the x coordinates
         [x1 _ _] (junctions (:i last-edge))
         [x2 _ _] (junctions (:j last-edge))]
     (* x1 x2)))
