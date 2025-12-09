@@ -27,9 +27,10 @@
     (sort-by :dist edges)))
 
 (defn initial-circuits [junctions]
-  (let [n    (count junctions)]
-    {:parent (vec (range n))
-     :size   (vec (repeat n 1))}))
+  (let [n        (count junctions)]
+    {:parent     (vec (range n))
+     :size       (vec (repeat n 1))
+     :components n}))
 
 (defn find-root [parent id]
   (if (= (parent id) id)
@@ -66,3 +67,34 @@
         circuits  (build-circuits junctions 1000)
         by-size   (largest-circuits circuits)]
     (reduce * (take 3 by-size))))
+
+(defn v2 [input]
+  (let [junctions (parse input)
+        edges     (compute-distances junctions)
+        n         (count junctions)
+        {:keys [last-edge]}
+        (reduce
+         (fn [{:keys [parent size components] :as acc} edge]
+           (let [{:keys [i j]} edge
+                 ri (find-root parent i)
+                 rj (find-root parent j)]
+             (if (= ri rj)
+               acc
+               (let [[small large] (if (<= (size ri) (size rj))
+                                     [ri rj]
+                                     [rj ri])
+                     parent'        (assoc parent small large)
+                     size'          (assoc size large (+ (size large) (size small)))
+                     components'    (dec components)
+                     acc'           {:parent     parent'
+                                     :size       size'
+                                     :components components'}]
+                 (if (= components' 1)
+                   (reduced (assoc acc' :last-edge edge))
+                   acc')))))
+         (initial-circuits junctions)
+         edges)
+              ;; take just the x coordinates
+        [x1 _ _] (junctions (:i last-edge))
+        [x2 _ _] (junctions (:j last-edge))]
+    (* x1 x2)))
