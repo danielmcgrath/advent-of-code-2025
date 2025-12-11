@@ -1,6 +1,6 @@
 {
   :paths ["src"]
-  :deps {}
+  :deps {org.ojalgo/ojalgo {:mvn/version "53.3.0"}}
 
   :aliases
   {:run {:main-opts ["-m" "aoc.core"]}}

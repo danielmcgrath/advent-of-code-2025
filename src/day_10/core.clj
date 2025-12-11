@@ -1,5 +1,6 @@
 (ns day-10.core
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str])
+  (:import [org.ojalgo.optimisation ExpressionsBasedModel]))
 
 (defn light->mask [s]
   (reduce
@@ -21,7 +22,7 @@
                          line)]
     {:target                (light->mask bracket)
      :buttons               (mapv button->mask (re-seq #"\([^)]*\)" parens))
-     :joltage-requirements  braces}))
+     :joltage-requirements  (mapv parse-long (str/split braces #","))}))
 
 (defn parse [input]
   (->> input
@@ -39,7 +40,6 @@
       (cond
         (= state target)
         steps
-
         :else
         (let [queue' (pop queue)
               [q v]
@@ -54,5 +54,38 @@
           (recur q v)))
       nil)))
 
+(defn mask->indices [mask]
+  (loop [i 0, acc []]
+    (if (< i 64)
+      (recur (inc i) (if (bit-test mask i) (conj acc i) acc))
+      acc)))
+
+(defn solve-v2 [buttons joltage]
+  (let [model (ExpressionsBasedModel.)
+        n (count joltage)
+        vars (mapv (fn [_]
+                     (doto (.addVariable model)
+                       (.lower 0)
+                       (.integer true)))
+                   buttons)]
+    (let [obj (.addExpression model "objective")]
+      (doseq [v vars]
+        (.set obj v 1))
+      (.weight obj 1))
+    (doseq [i (range n)]
+      (let [constraint (.addExpression model (str "eq" i))
+            target (nth joltage i)]
+        (doseq [[button-idx button] (map-indexed vector buttons)]
+          (when (some #(= i %) (mask->indices button))
+            (.set constraint (nth vars button-idx) 1)))
+        (.level constraint target)))
+    (when-let [result (.minimise model)]
+      (.getValue result))))
+
 (defn v1 [input]
   (reduce + (map (fn [{:keys [target buttons]}] (min-presses 0 target buttons)) (parse input))))
+
+(defn v2 [input]
+  (reduce + (map (fn [{:keys [buttons joltage-requirements]}]
+                   (or (solve-v2 buttons joltage-requirements) 0))
+                 (parse input))))
